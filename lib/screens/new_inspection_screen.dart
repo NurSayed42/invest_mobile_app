@@ -247,7 +247,7 @@ class _NewInspectionScreenState extends State<NewInspectionScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.engineering),
                       ),
-                      value: _assignedInspector,
+                      initialValue: _assignedInspector,
                       items: inspectors.map<DropdownMenuItem<String>>((inspector) {
                         return DropdownMenuItem<String>(
                           value: inspector['id'].toString(),

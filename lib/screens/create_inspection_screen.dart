@@ -1,5 +1,6 @@
 
 
+
 // import 'dart:io';
 // import 'dart:async';
 // import 'dart:convert';
@@ -496,7 +497,7 @@
 //       final data = widget.inspectionData!;
 //       print('📝 Initializing form with existing data: ${data['id']}');
       
-//       // Section A - Company's Client's Information
+//       // Section A - Company's Client's Information - AUTO LOAD FROM CARD DATA
 //       clientNameController.text = data['client_name'] ?? '';
 //       groupNameController.text = data['group_name'] ?? '';
 //       industryNameController.text = data['industry_name'] ?? '';
@@ -518,7 +519,7 @@
 //       economicPurposeController.text = data['economic_purpose_code'] ?? '';
 //       selectedInvestmentCategory = data['investment_category'];
       
-//       // Section B - Owner Information
+//       // Section B - Owner Information - AUTO LOAD FROM CARD DATA
 //       ownerNameController.text = data['owner_name'] ?? '';
 //       ownerAgeController.text = data['owner_age'] ?? '';
 //       fatherNameController.text = data['father_name'] ?? '';
@@ -675,6 +676,22 @@
 //         _calculateLiabilities();
 //         _calculateEquity();
 //       });
+//     } else if (!widget.isEditMode && widget.inspectionData != null) {
+//       // NEW: Auto-load data when coming from assigned inspections (not edit mode)
+//       final data = widget.inspectionData!;
+//       print('🎯 Auto-loading data from assigned inspection card');
+      
+//       // Section A - Company's Client's Information - AUTO LOAD FROM CARD
+//       clientNameController.text = data['client_name'] ?? '';
+//       industryNameController.text = data['industry_name'] ?? '';
+//       phoneController.text = data['phone_number'] ?? '';
+      
+//       // Debug information
+//       print('📋 Loaded from assigned inspection:');
+//       print('   Client Name: ${clientNameController.text}');
+//       print('   Industry: ${industryNameController.text}');
+//       print('   Phone: ${phoneController.text}');
+//       print('   Project: ${data['project'] ?? 'N/A'}');
 //     }
 //   }
 
@@ -2470,16 +2487,6 @@
 //                     _buildSectionM(),
 //                     SizedBox(height: 20),
                     
-//                     // Status dropdown for edit mode
-//                     // if (widget.isEditMode) ...[
-//                     //   _buildSectionContainer('Inspection Status', 
-//                     //     _buildDropdown('Status', selectedStatus, statusOptions, (value) {
-//                     //       setState(() { selectedStatus = value; });
-//                     //     }, isRequired: true)
-//                     //   ),
-//                     //   SizedBox(height: 20),
-//                     // ],
-                    
 //                     // Submit Button
 //                     Center(
 //                       child: Column(
@@ -2680,7 +2687,6 @@
   
 //   DocumentFile({required this.name, required this.path, required this.uploadDate});
 // }
-
 
 
 import 'dart:io';
@@ -3382,14 +3388,15 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     print('=== INSPECTION SUBMISSION SUMMARY ===');
     print('📍 Location Points: ${_locationPoints.length}');
     print('📊 Form Sections: A, B, C, D, E, F, G, H, I, J, K, L, M');
-    print('📷 Photos: ${sitePhotos.length} files');
-    print('🎥 Video: ${siteVideo != null ? "Yes" : "No"}');
+    print('📷 Photos: ${sitePhotos.length} files (will be saved as Base64)');
+    print('🎥 Video: ${siteVideo != null ? "Yes (will be saved as Base64)" : "No"}');
     print('📋 Checklist Items: ${checklistItems.length}');
     print('👥 Partners: ${partners.length}');
     print('💼 Employees: ${employees.length}');
     print('🏢 Competitors: ${competitors.length}');
     print('💰 Working Capital Items: ${workingCapitalItems.length}');
-    print('📄 Documents: ${uploadedDocuments.length}');
+    print('📄 Documents: ${uploadedDocuments.length} files (will be saved as Base64)');
+    print('🔤 All media files will be saved in Base64 format in database');
     print('====================================');
   }
 
@@ -3586,12 +3593,12 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
           // Section K - Checklist
           'checklist_items': checklistItems,
           
-          // Section L - Site Photos & Video
+          // Section L - Site Photos & Video - BASE64 FORMAT
           'site_photos': await _preparePhotosData(),
           'site_video': await _prepareVideoData(),
           
-          // Section M - Documents Upload
-          'uploaded_documents': _prepareDocumentsData(),
+          // Section M - Documents Upload - BASE64 FORMAT  
+          'uploaded_documents': await _prepareDocumentsData(),
           
           // Status field
           'status': selectedStatus ?? 'Pending',
@@ -3648,7 +3655,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     }
   }
 
-  // Prepare photos data for submission
+  // Prepare photos data for submission - BASE64 FORMAT
   Future<List<Map<String, dynamic>>> _preparePhotosData() async {
     List<Map<String, dynamic>> photosData = [];
     
@@ -3661,7 +3668,8 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
         'index': i,
         'file_name': 'site_photo_${i + 1}.jpg',
         'file_size': await photo.length(),
-        'base64_data': base64Image,
+        'base64_data': base64Image, // Base64 format এ save
+        'file_type': 'image/jpeg',
         'uploaded_at': DateTime.now().toIso8601String(),
         'description': 'Site photo ${i + 1}'
       });
@@ -3670,7 +3678,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     return photosData;
   }
 
-  // Prepare video data for submission
+  // Prepare video data for submission - BASE64 FORMAT
   Future<Map<String, dynamic>?> _prepareVideoData() async {
     if (siteVideo == null) return null;
     
@@ -3681,20 +3689,36 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     return {
       'file_name': 'site_video.mp4',
       'file_size': await video.length(),
-      'base64_data': base64Video,
+      'base64_data': base64Video, // Base64 format এ save
+      'file_type': 'video/mp4',
       'uploaded_at': DateTime.now().toIso8601String(),
       'description': 'Site documentation video'
     };
   }
 
-  // Prepare documents data for submission
-  List<Map<String, dynamic>> _prepareDocumentsData() {
-    return uploadedDocuments.map((doc) => {
-      'name': doc.name,
-      'file_path': doc.path,
-      'upload_date': doc.uploadDate.toIso8601String(),
-      'file_type': _getFileType(doc.name),
-    }).toList();
+  // Prepare documents data for submission - BASE64 FORMAT
+  Future<List<Map<String, dynamic>>> _prepareDocumentsData() async {
+    List<Map<String, dynamic>> documentsData = [];
+    
+    for (int i = 0; i < uploadedDocuments.length; i++) {
+      DocumentFile doc = uploadedDocuments[i];
+      File file = File(doc.path);
+      List<int> bytes = await file.readAsBytes();
+      String base64Data = base64Encode(bytes);
+      
+      documentsData.add({
+        'index': i,
+        'name': doc.name,
+        'file_path': doc.path,
+        'file_name': doc.name,
+        'file_size': await file.length(),
+        'base64_data': base64Data, // Base64 format এ save
+        'file_type': _getFileType(doc.name),
+        'upload_date': doc.uploadDate.toIso8601String(),
+      });
+    }
+    
+    return documentsData;
   }
 
   String _getFileType(String fileName) {
@@ -3864,7 +3888,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     try {
       final List<XFile> images = await _imagePicker.pickMultiImage(
         maxWidth: 1920, maxHeight: 1080, imageQuality: 85);
-      if (images != null && images.isNotEmpty) {
+      if (images.isNotEmpty) {
         setState(() {
           for (var image in images) {
             if (sitePhotos.length < 10) sitePhotos.add(File(image.path));
@@ -3999,7 +4023,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(
           labelText: '$label${isRequired ? ' *' : ''}',
           border: OutlineInputBorder(),
@@ -4027,7 +4051,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
             groupValue: selectedValue,
             onChanged: onChanged,
           );
-        }).toList(),
+        }),
       ],
     );
   }

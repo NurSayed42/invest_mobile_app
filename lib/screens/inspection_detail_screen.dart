@@ -1,5 +1,3 @@
-
-
 import 'dart:io';
 import 'dart:convert';
 import 'dart:math';
@@ -28,6 +26,34 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
   final InspectionService _inspectionService = InspectionService();
   bool isLoading = false;
   bool _showAllLocations = false;
+
+  // Helper method to safely get list data
+  List<dynamic> _getSafeList(dynamic data) {
+    if (data == null) return [];
+    if (data is List) return data;
+    if (data is String) {
+      try {
+        return json.decode(data);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  }
+
+  // Helper method to safely get map data
+  Map<String, dynamic> _getSafeMap(dynamic data) {
+    if (data == null) return {};
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is String) {
+      try {
+        return Map<String, dynamic>.from(json.decode(data));
+      } catch (e) {
+        return {};
+      }
+    }
+    return {};
+  }
 
   // Navigate to edit form with existing data
   void _navigateToEditForm() {
@@ -160,7 +186,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
   Widget _buildLocationSection() {
     final inspection = widget.inspection;
     
-    final locationPoints = inspection['location_points'] as List? ?? [];
+    final locationPoints = _getSafeList(inspection['location_points']);
     final totalPoints = inspection['total_location_points'] ?? locationPoints.length;
     final startTime = inspection['location_start_time'];
     final endTime = inspection['location_end_time'];
@@ -227,7 +253,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
               final index = entry.key;
               final point = entry.value;
               return _buildLocationPoint('Point ${index + 1}', point);
-            }).toList(),
+            }),
           ],
           
           // Map View Buttons
@@ -340,7 +366,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
   }
 
   void _openInteractiveMap() {
-    final locationPoints = widget.inspection['location_points'] as List? ?? [];
+    final locationPoints = _getSafeList(widget.inspection['location_points']);
     if (locationPoints.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -363,7 +389,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
   }
 
   void _openGoogleMaps() {
-    final locationPoints = widget.inspection['location_points'] as List? ?? [];
+    final locationPoints = _getSafeList(widget.inspection['location_points']);
     if (locationPoints.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -419,8 +445,8 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
   Widget _buildSectionK() {
     final inspection = widget.inspection;
     
-    if (inspection['checklist_items'] == null || 
-        (inspection['checklist_items'] as Map).isEmpty) {
+    final checklistItems = _getSafeMap(inspection['checklist_items']);
+    if (checklistItems.isEmpty) {
       return Container();
     }
 
@@ -428,15 +454,12 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('K. Checklist'),
-        _buildInfoCard('Checklist Verification', _buildChecklistItems()),
+        _buildInfoCard('Checklist Verification', _buildChecklistItems(checklistItems)),
       ],
     );
   }
 
-  List<Widget> _buildChecklistItems() {
-    final inspection = widget.inspection;
-    final checklistItems = inspection['checklist_items'] as Map<String, dynamic>? ?? {};
-    
+  List<Widget> _buildChecklistItems(Map<String, dynamic> checklistItems) {
     List<Widget> items = [];
     
     checklistItems.forEach((key, value) {
@@ -513,8 +536,8 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
   Widget _buildSectionL() {
     final inspection = widget.inspection;
     
-    final sitePhotos = inspection['site_photos'] as List? ?? [];
-    final siteVideo = inspection['site_video'] as Map<String, dynamic>? ?? {};
+    final sitePhotos = _getSafeList(inspection['site_photos']);
+    final siteVideo = _getSafeMap(inspection['site_video']);
     
     if (sitePhotos.isEmpty && siteVideo.isEmpty) {
       return Container();
@@ -642,7 +665,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                 ),
                 if (video['file_size'] != null)
                   Text(
-                    '${_formatFileSize(video['file_size'])}',
+                    _formatFileSize(video['file_size']),
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
               ],
@@ -760,7 +783,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
   // Section M: Documents Upload - FIXED VERSION
   Widget _buildSectionM() {
     final inspection = widget.inspection;
-    final documents = inspection['uploaded_documents'] as List? ?? [];
+    final documents = _getSafeList(inspection['uploaded_documents']);
     
     if (documents.isEmpty) {
       return Container();
@@ -775,7 +798,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
           const SizedBox(height: 12),
           ...documents.asMap().entries.map((entry) => 
             _buildDocumentItem(entry.value, entry.key)
-          ).toList(),
+          ),
         ]),
       ],
     );
@@ -905,7 +928,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
   // Section I: Working Capital Assessment
   Widget _buildSectionI() {
     final inspection = widget.inspection;
-    final workingCapitalItems = inspection['working_capital_items'] as List? ?? [];
+    final workingCapitalItems = _getSafeList(inspection['working_capital_items']);
     
     if (workingCapitalItems.isEmpty) {
       return Container();
@@ -926,10 +949,21 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
     );
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final inspection = widget.inspection;
     final currentStatus = inspection['status'] ?? 'Unknown';
+
+    // SAFELY GET ALL LISTS HERE - BEFORE BUILD
+    final locationPoints = _getSafeList(inspection['location_points']);
+    final sitePhotos = _getSafeList(inspection['site_photos']);
+    final siteVideo = _getSafeMap(inspection['site_video']);
+    final uploadedDocuments = _getSafeList(inspection['uploaded_documents']);
+    final workingCapitalItems = _getSafeList(inspection['working_capital_items']);
+    final checklistItems = _getSafeMap(inspection['checklist_items']);
+    final partnersDirectors = _getSafeList(inspection['partners_directors']);
+    final competitors = _getSafeList(inspection['competitors']);
+    final keyEmployees = _getSafeList(inspection['key_employees']);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FFF9),
@@ -939,7 +973,6 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
           'Inspection Details',
           style: TextStyle(color: Colors.white),
         ),
-        
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToEditForm,
@@ -954,99 +987,99 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header Card with Basic Info
-                    Card(
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  _getStatusIcon(currentStatus),
-                                  size: 40,
-                                  color: _getStatusColor(currentStatus),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Client Name with label
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: "Client Name: ",
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.grey[700],
-                                              ),
+                  Card(
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                _getStatusIcon(currentStatus),
+                                size: 40,
+                                color: _getStatusColor(currentStatus),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Client Name with label
+                                    RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: "Client Name: ",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.grey[700],
                                             ),
-                                            TextSpan(
-                                              text: inspection['client_name'] ?? 'Unnamed Client',
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFF116045),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      // Company Name with label
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: "Company: ",
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: inspection['company_name'] ?? 'No Company',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      // Status Badge - First line
-                                      _buildStatusBadge(currentStatus),
-                                      const SizedBox(height: 12),
-                                      // Edit Button - Second line (half width)
-                                      Container(
-                                        width: MediaQuery.of(context).size.width * 0.5, // 50% width
-                                        child: ElevatedButton.icon(
-                                          onPressed: _navigateToEditForm,
-                                          icon: const Icon(Icons.edit),
-                                          label: const Text('Edit Inspection'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF116045),
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                           ),
+                                          TextSpan(
+                                            text: inspection['client_name'] ?? 'Unnamed Client',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF116045),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Company Name with label
+                                    RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: "Company: ",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: inspection['company_name'] ?? 'No Company',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    // Status Badge - First line
+                                    _buildStatusBadge(currentStatus),
+                                    const SizedBox(height: 12),
+                                    // Edit Button - Second line (half width)
+                                    SizedBox(
+                                      width: MediaQuery.of(context).size.width * 0.5, // 50% width
+                                      child: ElevatedButton.icon(
+                                        onPressed: _navigateToEditForm,
+                                        icon: const Icon(Icons.edit),
+                                        label: const Text('Edit Inspection'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF116045),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
+                  ),
                   const SizedBox(height: 20),
 
                   // Location Tracking Section - Added at the top
@@ -1101,14 +1134,11 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                     _buildInfoRow('Permanent Address', inspection['permanent_address'] ?? ''),
                   ]),
 
-                  // Section C: Partners/Directors
-                  if (inspection['partners_directors'] != null && 
-                      (inspection['partners_directors'] as List).isNotEmpty)
-                    _buildSectionTitle('C. Partners/Directors'),
-                  if (inspection['partners_directors'] != null && 
-                      (inspection['partners_directors'] as List).isNotEmpty)
+                  // Section C: Partners/Directors - FIXED
+                  if (partnersDirectors.isNotEmpty) _buildSectionTitle('C. Partners/Directors'),
+                  if (partnersDirectors.isNotEmpty)
                     _buildInfoCard('Partners & Directors', [
-                      for (var partner in inspection['partners_directors'])
+                      for (var partner in partnersDirectors)
                         Column(
                           children: [
                             _buildInfoRow('Name', partner['name'] ?? 'N/A'),
@@ -1163,11 +1193,10 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                     _buildInfoRow('Profitability Observation', inspection['profitability_observation'] ?? ''),
                   ]),
 
-                  // Competitors
-                  if (inspection['competitors'] != null && 
-                      (inspection['competitors'] as List).isNotEmpty)
+                  // Competitors - FIXED
+                  if (competitors.isNotEmpty)
                     _buildInfoCard('Competitors Analysis', [
-                      for (var competitor in inspection['competitors'])
+                      for (var competitor in competitors)
                         if (competitor['name'] != null && competitor['name'].toString().isNotEmpty)
                           Column(
                             children: [
@@ -1191,11 +1220,10 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                     _buildInfoRow('Unskilled Worker', inspection['unskilled_worker'] ?? ''),
                   ]),
 
-                  // Key Employees
-                  if (inspection['key_employees'] != null && 
-                      (inspection['key_employees'] as List).isNotEmpty)
+                  // Key Employees - FIXED
+                  if (keyEmployees.isNotEmpty)
                     _buildInfoCard('Key Employees', [
-                      for (var employee in inspection['key_employees'])
+                      for (var employee in keyEmployees)
                         Column(
                           children: [
                             _buildInfoRow('Name', employee['name'] ?? 'N/A'),
@@ -1241,7 +1269,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                     _buildInfoRow('Resources', inspection['resources'] ?? ''),
                   ]),
 
-                  // Section I: Working Capital Assessment
+                  // Section I: Working Capital Assessment - FIXED
                   _buildSectionI(),
 
                   // Section J: Godown Particulars
@@ -1266,13 +1294,13 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
                     _buildInfoRow('Godown Hired', inspection['godown_hired'] == true ? 'Yes' : 'No'),
                   ]),
 
-                  // Section K: Checklist
+                  // Section K: Checklist - FIXED
                   _buildSectionK(),
 
-                  // Section L: Site Photos & Video
+                  // Section L: Site Photos & Video - FIXED
                   _buildSectionL(),
 
-                  // Section M: Documents Upload
+                  // Section M: Documents Upload - FIXED
                   _buildSectionM(),
 
                   // Timestamps
@@ -2309,7 +2337,7 @@ class _MapViewScreenState extends State<MapViewScreen> {
   }
 
   void _fitToBounds() {
-    if (bounds != null && mapController != null) {
+    if (bounds != null) {
       mapController.animateCamera(
         CameraUpdate.newLatLngBounds(bounds!, 50),
       );
