@@ -1850,7 +1850,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class InspectionService {
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'http://localhost:8000/api';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   // Token নেওয়ার method

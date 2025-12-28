@@ -19,7 +19,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   final TextEditingController branchCtl = TextEditingController();
 
   final storage = const FlutterSecureStorage();
-  final String apiBase = 'http://10.0.2.2:8000/api';
+  final String apiBase = 'http://localhost:8000/api';
 
   bool loading = false;
 

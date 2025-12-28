@@ -33,7 +33,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> fetchStats() async {
     try {
-      final url = Uri.parse('http://10.0.2.2:8000/api/inspection/stats/');
+      final url = Uri.parse('http://localhost:8000/api/inspection/stats/');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {

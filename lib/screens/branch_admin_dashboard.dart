@@ -32,7 +32,7 @@ class _BranchAdminDashboardState extends State<BranchAdminDashboard> {
   String userName = '';
   bool isLoading = true;
 
-  final String apiBase = 'http://10.0.2.2:8000/api';
+  final String apiBase = 'http://localhost:8000/api';
 
   @override
   void initState() {

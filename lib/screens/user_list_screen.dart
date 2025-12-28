@@ -13,7 +13,7 @@ class UserListScreen extends StatefulWidget {
 
 class _UserListScreenState extends State<UserListScreen> {
   final storage = const FlutterSecureStorage();
-  final String apiBase = 'http://10.0.2.2:8000/api';
+  final String apiBase = 'http://localhost:8000/api';
   bool loading = false;
   List users = [];
 

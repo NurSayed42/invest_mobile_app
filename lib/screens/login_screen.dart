@@ -15,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passCtl = TextEditingController();
   String _role = 'admin';
   final storage = const FlutterSecureStorage();
-  final String apiBase = 'http://10.0.2.2:8000/api';
+  final String apiBase = 'http://localhost:8000/api';
 
   bool loading = false;
 

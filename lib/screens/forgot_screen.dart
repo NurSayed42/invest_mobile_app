@@ -12,7 +12,7 @@ class ForgotScreen extends StatefulWidget {
 class _ForgotScreenState extends State<ForgotScreen> {
   final TextEditingController emailCtl = TextEditingController();
   bool loading = false;
-  final String apiBase = 'http://10.0.2.2:8000/api';
+  final String apiBase = 'http://localhost:8000/api';
 
   Future<void> sendReset() async {
     setState(() => loading = true);

@@ -13,7 +13,7 @@ class NewInspectionScreen extends StatefulWidget {
 
 class _NewInspectionScreenState extends State<NewInspectionScreen> {
   final storage = const FlutterSecureStorage();
-  final String apiBase = 'http://10.0.2.2:8000/api';
+  final String apiBase = 'http://localhost:8000/api';
 
   final _formKey = GlobalKey<FormState>();
   

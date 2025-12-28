@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AdminService {
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'http://localhost:8000/api';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<Map<String, String>> _getHeaders() async {
@@ -22,8 +22,7 @@ class AdminService {
         headers: headers,
       );
 
-      print('Stats API Response: ${response.statusCode}');
-      print('Stats API Body: ${response.body}');
+
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -51,8 +50,7 @@ class AdminService {
         headers: headers,
       );
 
-      print('Inspections API Response: ${response.statusCode}');
-      print('Inspections API Body: ${response.body}');
+
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
