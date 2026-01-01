@@ -22,7 +22,8 @@ class AdminService {
         headers: headers,
       );
 
-
+      print('Stats API Response: ${response.statusCode}');
+      print('Stats API Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -50,7 +51,8 @@ class AdminService {
         headers: headers,
       );
 
-
+      print('Inspections API Response: ${response.statusCode}');
+      print('Inspections API Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
